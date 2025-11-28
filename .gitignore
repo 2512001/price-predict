@@ -1,0 +1,13 @@
+backend/node_modules/
+client/node_modules/
+ml/.venv/
+npm-debug.log*
+yarn.lock
+
+.env
+backend/.env
+ml/.env
+
+.vscode/
+.idea/
+.DS_Store

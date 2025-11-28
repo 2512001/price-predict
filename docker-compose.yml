@@ -1,0 +1,74 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:7
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongo_data:/data/db
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_URL: mongodb://root:password@mongo:27017/
+    depends_on:
+      - mongo    
+
+  backend:
+    image: node:18
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/cashify
+      - NODE_ENV=production
+      - PRICE_DROP_THRESHOLD=0.5
+      - ML_SERVICE_URL=http://ml_service:8000/predict/down
+    depends_on:
+      - mongo
+      - ml_service
+    command: sh -c "npm install && npm run start"
+    ports:
+      - "3000:3000"
+
+  ml_service:
+    build:
+      context: .
+      dockerfile: Dockerfile.ml
+    environment:
+      - PRICE_HISTORY_CSV=/app/iphone_synthetic_prices.csv
+    volumes:
+      - ./ml:/app
+    depends_on:
+      - mongo
+    ports:
+      - "8000:8000"
+
+  frontend:
+    image: node:18
+    working_dir: /app
+    volumes:
+      - ./client:/app
+    environment:
+      - VITE_API_BASE=http://backend:3000/api
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:
+
+
