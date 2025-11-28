@@ -1,0 +1,7 @@
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--secondary-bg);
+  color: var(--text-dark);
+  margin: 0;
+  padding: 0;
+}
